@@ -14,11 +14,6 @@ const db = mysql.createConnection({
 
 app.use(express.json());
 
-app.get('/', (req, res) => {
-  res.send('เซิร์ฟเวอร์ทำงานปกติ');
-});
-
-// ดึงสินค้าทั้งหมด
 app.get('/products', (req, res) => {
   const sql = 'SELECT * FROM products WHERE is_deleted = 0';
   db.query(sql, (err, results) => {
@@ -27,7 +22,6 @@ app.get('/products', (req, res) => {
   });
 });
 
-// ดึงสินค้าตาม ID
 app.get('/products/:id', (req, res) => {
   const id = req.params.id;
   const sql = 'SELECT * FROM products WHERE id = ? AND is_deleted = 0';
@@ -47,8 +41,6 @@ app.get('/products/search/:keyword', (req, res) => {
   });
 });
 
-
-//เพิ่มสินค้าใหม่
 app.post('/products', (req, res) => {
     const { name, price, discount, review_count, image_url } = req.body;
     db.query('INSERT INTO products (name, price, discount, review_count, image_url) VALUES (?, ?, ?, ?, ?)',
@@ -60,7 +52,6 @@ app.post('/products', (req, res) => {
     );
 })
 
-//แก้ไขสินค้า
 app.put('/products/:id', (req, res) => {
   const { name, price, discount, review_count, image_url } = req.body;
   db.query(
@@ -73,7 +64,6 @@ app.put('/products/:id', (req, res) => {
   );
 });
 
-//ลบสินค้า SOFT
 app.delete('/products/:id', (req, res) => {
   db.query(
     'UPDATE products SET is_deleted = 1 WHERE id = ?',
@@ -85,7 +75,6 @@ app.delete('/products/:id', (req, res) => {
   );
 });
 
-//API กู้คืนข้อมูลที่ถูกลบ
 app.put('/products/restore/:id', (req, res) => {
   db.query(
     'UPDATE products SET is_deleted = 0 WHERE id = ?',
