@@ -1,9 +1,9 @@
-const db = require("../config/db.js")
+const Product = require("../models/productModel");
 
 const productController = {
     getAllProducts: (req, res) => {
 
-          db.query('SELECT * FROM products WHERE is_deleted = 0', (err, results) => {
+          Product.getAll((err, results) => {
 
                     if (err) return res.status(500).json({ error: err.message });
 
@@ -14,7 +14,7 @@ const productController = {
 
     getProductById: (req, res) => {
 
-          db.query('SELECT * FROM products WHERE id = ? AND is_deleted = 0', [req.params.id], (err, results) => {
+          Product.getById(req.params.id, (err, results) => {
 
                     if (err) return res.status(500).json({ error: err.message });
 
@@ -25,9 +25,9 @@ const productController = {
 
     searchProducts: (req, res) => {
 
-          const keyword = `%${req.params.keyword}%`;
+          const { keyword } = req.params;
 
-          db.query('SELECT * FROM products WHERE name LIKE ? AND is_deleted = 0', [keyword], (err, results) => {
+          Product.searchByKeyword(keyword, (err, results) => {
 
                     if (err) return res.status(500).json({ error: err.message });
 
@@ -38,26 +38,28 @@ const productController = {
 
     createProduct: (req, res) => {
 
-          const { name, price, discount, review_count, image_url } = req.body;
+          const { name, price } = req.body;
 
-          const query = 'INSERT INTO products (name, price, discount, review_count, image_url) VALUES (?, ?, ?, ?, ?)';
+          if (!name || price == null) {
+                  return res.status(400).json({ error: 'name and price are required' });
+          }
 
-          db.query(query, [name, price, discount, review_count, image_url], (err, result) => {
+          Product.create(req.body, (err, result) => {
 
-                    if (err) return res.status(500).json({ error: err.message });
+                    if (err) {
+                        return res.status(500).json({ error: err.message });
+                    }
 
-                    res.status(201).json({ id: result.insertId, message: 'Product created' });
+                    res.status(201).json({ message: 'Product created' });
 
           });
     },
 
     updateProduct: (req, res) => {
 
-          const { name, price, discount, review_count, image_url } = req.body;
+          const { id } = req.params;
 
-          const query = 'UPDATE products SET name = ?, price = ?, discount = ?, review_count = ?, image_url = ? WHERE id = ?';
-
-          db.query(query, [name, price, discount, review_count, image_url, req.params.id], err => {
+          Product.update(id, req.body, err => {
 
                     if (err) return res.status(500).json({ error: err.message });
 
@@ -68,7 +70,9 @@ const productController = {
 
     softDeleteProduct: (req, res) => {
 
-          db.query('UPDATE products SET is_deleted = 1 WHERE id = ?', [req.params.id], err => {
+          const { id } = req.params;
+
+          Product.softDelete(id, err => {
 
                     if (err) return res.status(500).json({ error: err.message });
 
@@ -79,14 +83,23 @@ const productController = {
 
     restoreProduct: (req, res) => {
 
-          db.query('UPDATE products SET is_deleted = 0 WHERE id = ?', [req.params.id], err => {
+          const { id } = req.params;
+
+          Product.restore(id, err => {
 
                     if (err) return res.status(500).json({ error: err.message });
 
                     res.json({ message: 'Product restored' });
 
           });
+    },
+
+    getProductsView: (req, res) => {
+            Product.getAll((err, results) => {
+                  if (err) return res.status(500).json({ error: err.message });
+                  res.render('products', { products: results });
+            });
     }
-}
+};
 
 module.exports = productController;
